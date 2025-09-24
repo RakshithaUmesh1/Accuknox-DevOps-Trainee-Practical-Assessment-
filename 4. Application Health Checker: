@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# -------------------------------
+# Application Uptime Monitoring
+# -------------------------------
+
+# URL of the application to monitor
+APP_URL="https://example.com"
+
+# Log file
+LOG_FILE="/var/log/app_uptime.log"
+
+# Get HTTP status code
+HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$APP_URL")
+
+# Check if the status code indicates 'up' or 'down'
+if [[ "$HTTP_STATUS" -ge 200 && "$HTTP_STATUS" -lt 400 ]]; then
+    STATUS="UP"
+else
+    STATUS="DOWN"
+fi
+
+# Log result with timestamp
+echo "$(date): Application at $APP_URL is $STATUS (HTTP $HTTP_STATUS)" | tee -a "$LOG_FILE"
