@@ -1,0 +1,54 @@
+#!/bin/bash
+# Thresholds
+CPU_THRESHOLD=80       # CPU usage in %
+MEMORY_THRESHOLD=80    # Memory usage in %
+DISK_THRESHOLD=80      # Disk usage in %
+PROCESS_THRESHOLD=300  # Max allowed running processes (example)
+
+# Log file
+LOG_FILE="/var/log/system_health.log"
+
+# Function to get current CPU usage
+check_cpu() {
+    CPU=$(top -bn1 | grep "Cpu(s)" | awk '{usage=100-$8} END {print usage}')
+    CPU=${CPU%.*}  # convert to integer
+    if [ "$CPU" -gt "$CPU_THRESHOLD" ]; then
+        echo "$(date): ALERT! CPU usage is high: $CPU%" | tee -a $LOG_FILE
+    fi
+}
+
+# Function to get current memory usage
+check_memory() {
+    MEM=$(free | grep Mem | awk '{usage=($3/$2)*100} END {print usage}')
+    MEM=${MEM%.*}
+    if [ "$MEM" -gt "$MEMORY_THRESHOLD" ]; then
+        echo "$(date): ALERT! Memory usage is high: $MEM%" | tee -a $LOG_FILE
+    fi
+}
+
+# Function to get disk usage
+check_disk() {
+    DISK=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+    if [ "$DISK" -gt "$DISK_THRESHOLD" ]; then
+        echo "$(date): ALERT! Disk usage is high: $DISK%" | tee -a $LOG_FILE
+    fi
+}
+
+# Function to check running processes
+check_processes() {
+    PROC=$(ps aux --no-heading | wc -l)
+    if [ "$PROC" -gt "$PROCESS_THRESHOLD" ]; then
+        echo "$(date): ALERT! Too many processes running: $PROC" | tee -a $LOG_FILE
+    fi
+}
+
+# Main monitoring function
+monitor_system() {
+    check_cpu
+    check_memory
+    check_disk
+    check_processes
+}
+
+# Run monitoring
+monitor_system
